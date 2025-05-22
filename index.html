@@ -6,7 +6,7 @@
     <title>Trading Jurnal</title>
   </head>
   <body>
-    <!-- 🔐 Bară de autentificare sus -->
+    <!-- Bara de autentificare sus -->
     <div id="auth-bar" style="background: #f3f3f3; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
       <div id="auth-section" style="display: flex; gap: 0.5rem;">
         <input id="email" type="email" placeholder="Email" style="padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
@@ -18,7 +18,9 @@
     </div>
 
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Încarcă scriptul tău JS după ce toate elementele sunt gata -->
+    <script type="module" src="/firebase-init.js"></script>
   </body>
 </html>
 
