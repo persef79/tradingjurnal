@@ -1,72 +1,70 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Trading Jurnal</title>
+<style>
+  :root {
+    --bg-color: #121212;
+    --panel-color: #1e1e1e;
+    --input-bg: #2c2c2c;
+    --text-color: #e0e0e0;
+    --button-bg: #3f3f3f;
+    --button-hover: #575757;
+    --accent-color: #bb86fc;
+    --danger-color: crimson;
+  }
 
-    <style>
-      #auth-bar {
-        background: #f3f3f3;
-        padding: 0.5rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-family: sans-serif;
-      }
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    font-family: sans-serif;
+  }
 
-      #auth-section {
-        display: flex;
-        gap: 0.25rem;
-        align-items: center;
-      }
+  #auth-bar {
+    background: var(--panel-color);
+    padding: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+  }
 
-      #auth-section input {
-        padding: 0.25rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 0.6rem;
-        width: 140px;
-      }
+  #auth-section {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
 
-      #auth-section button {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.6rem;
-        cursor: pointer;
-      }
+  #auth-section input {
+    padding: 0.25rem;
+    border: 1px solid #444;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-radius: 4px;
+    font-size: 0.6rem;
+    width: 140px;
+  }
 
-      #logout-btn {
-        display: none;
-        padding: 0.25rem 0.5rem;
-        background: crimson;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.6rem;
-        cursor: pointer;
-      }
-    </style>
-  </head>
+  #auth-section button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6rem;
+    cursor: pointer;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
 
-  <body>
-    <!-- Bara de autentificare sus -->
-    <div id="auth-bar">
-      <div id="auth-section">
-        <input id="email" type="email" placeholder="Email" />
-        <input id="password" type="password" placeholder="Parolă" />
-        <button id="login-btn">Logare</button>
-        <button id="register-btn">Înregistrare</button>
-      </div>
-      <button id="logout-btn">Delogare</button>
-    </div>
+  #auth-section button:hover {
+    background-color: var(--button-hover);
+  }
 
-    <!-- Conținutul principal React -->
-    <div id="root"></div>
-
-    <!-- Scriptul cu Firebase -->
-    <script type="module" src="/firebase-init.js"></script>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-
-
+  #logout-btn {
+    display: none;
+    padding: 0.25rem 0.5rem;
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    cursor: pointer;
+  }
+</style>
