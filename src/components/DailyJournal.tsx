@@ -15,7 +15,6 @@ const DailyJournal: React.FC<DailyJournalProps> = ({
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [observations, setObservations] = useState<string>('');
   
-  // Update observations state when dayJournal changes
   React.useEffect(() => {
     if (dayJournal) {
       setObservations(dayJournal.observations);
@@ -24,9 +23,9 @@ const DailyJournal: React.FC<DailyJournalProps> = ({
   
   if (!dayJournal) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-full flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 min-h-[200px] flex items-center justify-center">
         <p className="text-gray-500 dark:text-gray-400 text-center">
-          Select a trading day from the calendar to view details
+          Select a trading day from the calendar
         </p>
       </div>
     );
@@ -45,7 +44,7 @@ const DailyJournal: React.FC<DailyJournalProps> = ({
   };
   
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-full flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
           {formattedDate}
@@ -64,7 +63,7 @@ const DailyJournal: React.FC<DailyJournalProps> = ({
           <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200 mb-3">
             Trades ({dayJournal.tradeCount})
           </h3>
-          <div className="overflow-auto max-h-80 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="overflow-auto max-h-[400px] border border-gray-200 dark:border-gray-700 rounded-lg">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
@@ -112,7 +111,7 @@ const DailyJournal: React.FC<DailyJournalProps> = ({
           <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200 mb-3">
             Trading Observations
           </h3>
-          <div className="flex flex-col h-80">
+          <div className="flex flex-col h-[400px]">
             <textarea
               className="w-full h-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg
                          bg-white dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 

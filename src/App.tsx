@@ -35,7 +35,6 @@ function App() {
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   );
   
-  // Update calendar days when month or journal data changes
   useEffect(() => {
     const journalDays = Object.entries(journalData.days).reduce(
       (acc, [date, data]) => ({
@@ -48,7 +47,6 @@ function App() {
     setCalendarDays(generateCalendarDays(currentMonth, journalDays));
   }, [currentMonth, journalData]);
   
-  // Set dark mode class on body
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -57,7 +55,6 @@ function App() {
     }
   }, [isDarkMode]);
   
-  // Event handlers
   const handlePrevMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
@@ -73,11 +70,9 @@ function App() {
   const handleImportData = (data: JournalData) => {
     setJournalData(data);
     
-    // Find the most recent trading day and select it
     const dates = Object.keys(data.days).sort().reverse();
     if (dates.length > 0) {
       setSelectedDate(dates[0]);
-      // Update current month to show the month containing the most recent trading day
       const [year, month] = dates[0].split('-').map(Number);
       setCurrentMonth(new Date(year, month - 1, 1));
     }
@@ -134,7 +129,11 @@ function App() {
       />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="mb-6">
+          <StatisticsPanel statistics={journalData.statistics} />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
             <Calendar 
               calendarDays={calendarDays}
@@ -144,13 +143,9 @@ function App() {
               onNextMonth={handleNextMonth}
               selectedDate={selectedDate}
             />
-            
-            <div className="mt-6">
-              <StatisticsPanel statistics={journalData.statistics} />
-            </div>
           </div>
           
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <DailyJournal 
               dayJournal={selectedDate ? journalData.days[selectedDate] : null}
               onUpdateObservations={handleUpdateObservations}
