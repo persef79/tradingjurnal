@@ -2,15 +2,13 @@ import { Trade, JournalData, DayJournal } from '../types';
 
 /**
  * Parse MT5 CSV report data
- * Expected format: 
- * Deal,Time,Type,Direction,Volume,Price,Order,Commission,Swap,Profit
+ * Format: Deal,Time,Type,Direction,Volume,Price,Order,Commission,Swap,Profit
  */
 export function parseMT5Data(csvData: string): JournalData {
   const lines = csvData.trim().split('\n');
   const dataLines = lines.slice(1); // skip header
-
   const trades: Trade[] = [];
-  const currentTradeMap: Record<string, Partial<Trade>> = {};
+  const openQueue: Partial<Trade>[] = [];
 
   dataLines.forEach(line => {
     const [
@@ -34,8 +32,7 @@ export function parseMT5Data(csvData: string): JournalData {
     const date = new Date(time);
 
     if (type === 'buy' || type === 'sell') {
-      // Open position
-      currentTradeMap[order] = {
+      openQueue.push({
         id: order,
         symbol: deal,
         type: type as 'buy' | 'sell',
@@ -44,31 +41,48 @@ export function parseMT5Data(csvData: string): JournalData {
         volume,
         commission,
         swap,
-      };
-    } 
-    else if (type === 'close' && currentTradeMap[order]) {
-      // Close position
-      const openTrade = currentTradeMap[order];
-      trades.push({
-        id: order,
-        symbol: deal,
-        type: openTrade.type as 'buy' | 'sell',
-        openTime: openTrade.openTime as Date,
-        closeTime: date,
-        openPrice: openTrade.openPrice as number,
-        closePrice: price,
-        volume: openTrade.volume as number,
-        commission: (openTrade.commission || 0) + commission,
-        swap: (openTrade.swap || 0) + swap,
-        profit: profit,
       });
-      delete currentTradeMap[order]; // remove closed trade
+    } else if (type === 'close') {
+      // Găsim primul trade deschis cu volum compatibil
+      let remainingVolume = volume;
+
+      while (remainingVolume > 0 && openQueue.length > 0) {
+        const openTrade = openQueue[0];
+        const openVolume = openTrade.volume || 0;
+
+        const usedVolume = Math.min(openVolume, remainingVolume);
+
+        const volumeRatio = usedVolume / openVolume;
+
+        trades.push({
+          id: order,
+          symbol: deal,
+          type: openTrade.type as 'buy' | 'sell',
+          openTime: openTrade.openTime as Date,
+          closeTime: date,
+          openPrice: openTrade.openPrice as number,
+          closePrice: price,
+          volume: usedVolume,
+          commission: (openTrade.commission || 0) * volumeRatio + commission * volumeRatio,
+          swap: (openTrade.swap || 0) * volumeRatio + swap * volumeRatio,
+          profit: profit * volumeRatio
+        });
+
+        remainingVolume -= usedVolume;
+
+        if (usedVolume === openVolume) {
+          openQueue.shift(); // eliminăm trade-ul complet închis
+        } else {
+          if (openTrade.volume) openTrade.volume -= usedVolume;
+          if (openTrade.commission) openTrade.commission *= (1 - volumeRatio);
+          if (openTrade.swap) openTrade.swap *= (1 - volumeRatio);
+        }
+      }
     }
   });
 
-  // Group trades by day
+  // Grupare pe zile
   const dayJournals: Record<string, DayJournal> = {};
-
   trades.forEach(trade => {
     const dateStr = trade.closeTime.toISOString().split('T')[0];
     if (!dayJournals[dateStr]) {
@@ -85,7 +99,6 @@ export function parseMT5Data(csvData: string): JournalData {
     dayJournals[dateStr].tradeCount += 1;
   });
 
-  // Calculate statistics
   const statistics = calculateStatistics(trades);
 
   return {
