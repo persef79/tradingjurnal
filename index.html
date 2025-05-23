@@ -3,97 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Trading Jurnal</title>
-
-    <style>
-      :root {
-        --bg-color: #181818;
-        --panel-color: #242424;
-        --input-bg: #2e2e2e;
-        --text-color: #ffffff;
-        --button-bg: #3a3a3a;
-        --button-hover: #555555;
-        --accent-color: #bb86fc;
-        --danger-color: #e53935;
-      }
-
-      body {
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        margin: 0;
-        font-family: sans-serif;
-      }
-
-      #auth-bar {
-        background: var(--panel-color);
-        padding: 0.75rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #444;
-      }
-
-      #auth-section {
-        display: flex;
-        gap: 0.5rem;
-        align-items: center;
-      }
-
-      #auth-section input {
-        padding: 0.4rem;
-        border: 1px solid #555;
-        background-color: var(--input-bg);
-        color: var(--text-color);
-        border-radius: 4px;
-        font-size: 0.75rem;
-        width: 160px;
-      }
-
-      #auth-section button {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.75rem;
-        cursor: pointer;
-        background-color: var(--button-bg);
-        color: var(--text-color);
-        border: none;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-      }
-
-      #auth-section button:hover {
-        background-color: var(--button-hover);
-      }
-
-      #logout-btn {
-        display: none;
-        padding: 0.4rem 0.75rem;
-        background: var(--danger-color);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        cursor: pointer;
-      }
-    </style>
+    <title>Trading Journal</title>
   </head>
-
   <body>
-    <!-- Bara de autentificare sus -->
-    <div id="auth-bar">
-      <div id="auth-section">
-        <input id="email" type="email" placeholder="Email" />
-        <input id="password" type="password" placeholder="Parolă" />
-        <button id="login-btn">Logare</button>
-        <button id="register-btn">Înregistrare</button>
-      </div>
-      <button id="logout-btn">Delogare</button>
-    </div>
-
-    <!-- Conținutul principal React -->
     <div id="root"></div>
-
-    <!-- Scriptul cu Firebase -->
-    <script type="module" src="/firebase-init.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
