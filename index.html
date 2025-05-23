@@ -2,95 +2,46 @@
 <html lang="ro">
 <head>
   <meta charset="UTF-8" />
-  <title>Trading Jurnal</title>
+  <title>Trading Jurnal - Test Login</title>
   <style>
-    /* Header cu login/logout */
-    header {
-      background-color: #333;
-      color: white;
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    body {
       font-family: Arial, sans-serif;
     }
-
     #auth-section {
       display: flex;
-      align-items: center;
       gap: 10px;
+      margin: 20px;
     }
-
-    #auth-section input {
-      padding: 5px 8px;
-      border-radius: 4px;
-      border: none;
-      font-size: 14px;
+    #main-content {
+      display: none; /* Ascuns la început */
+      margin: 20px;
+      border: 1px solid #ccc;
+      padding: 10px;
     }
-
-    #auth-section button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      background-color: #555;
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    #auth-section button:hover {
-      background-color: #777;
-    }
-
     #logout-btn {
       display: none;
+      margin: 20px;
       padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      background-color: #d9534f;
-      color: white;
       cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    #logout-btn:hover {
-      background-color: #c9302c;
-    }
-
-    /* Ascunde conținutul înainte de login */
-    #main-content {
-      display: none;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
-      font-family: Arial, sans-serif;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <div><strong>Trading Jurnal</strong></div>
+  <div id="auth-section">
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Parolă" />
+    <button id="login-btn">Login</button>
+    <button id="register-btn">Înregistrare</button>
+  </div>
 
-    <div id="auth-section">
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Parolă" />
-      <button id="login-btn">Login</button>
-      <button id="register-btn">Înregistrare</button>
-    </div>
+  <button id="logout-btn">Logout</button>
 
-    <button id="logout-btn">Logout</button>
-  </header>
-
-  <main id="main-content">
-    <h1>Bine ai venit!</h1>
-    <p>Aici va fi conținutul aplicației tale de trading jurnal.</p>
-    <!-- Aici adaugi restul paginii tale -->
-  </main>
+  <div id="main-content">
+    <h2>Salut, utilizator!</h2>
+    <p>Aceasta este zona ta de conținut după autentificare.</p>
+  </div>
 
   <script type="module" src="firebase-init.js"></script>
-
 </body>
 </html>
