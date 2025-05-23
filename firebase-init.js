@@ -28,40 +28,37 @@ const logoutBtn = document.getElementById("logout-btn");
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    // Nu afișăm nimic
   } catch (e) {
-    console.error("Eroare la login:", e.message);
+    console.error("Login error:", e.message);
   }
 });
 
 registerBtn.addEventListener("click", async () => {
   try {
     await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    // Nu afișăm nimic
   } catch (e) {
-    console.error("Eroare la înregistrare:", e.message);
+    console.error("Register error:", e.message);
   }
 });
 
 logoutBtn.addEventListener("click", async () => {
   try {
     await signOut(auth);
-    // Nu afișăm nimic
   } catch (e) {
-    console.error("Eroare la logout:", e.message);
+    console.error("Logout error:", e.message);
   }
 });
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // Dacă ești logat, ascundem login-ul și înlocuim cu logout
+    // Ascunde câmpurile de login și arată doar logout
     emailInput.style.display = "none";
     passwordInput.style.display = "none";
     loginBtn.style.display = "none";
     registerBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
   } else {
-    // Dacă nu ești logat, arătăm login-ul și ascundem logout
+    // Arată câmpurile de login și ascunde logout
     emailInput.style.display = "inline-block";
     passwordInput.style.display = "inline-block";
     loginBtn.style.display = "inline-block";
