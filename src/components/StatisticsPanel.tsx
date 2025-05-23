@@ -10,7 +10,7 @@ interface StatisticsPanelProps {
 const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
         Trading Performance
       </h2>
       
@@ -26,8 +26,8 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
               <DollarSign size={20} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total P/L</p>
-              <p className={`text-xl font-bold ${
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Total P/L</p>
+              <p className={`text-lg font-bold ${
                 statistics.totalProfit >= 0 
                   ? 'text-green-600 dark:text-green-400' 
                   : 'text-red-600 dark:text-red-400'
@@ -45,8 +45,8 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
               <BarChart3 size={20} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Win Rate</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Win Rate</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {formatPercent(statistics.winRate)}
               </p>
             </div>
@@ -60,10 +60,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
               <TrendingUp size={20} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Winning Trades</p>
-              <p className="text-xl font-bold text-green-600 dark:text-green-400">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Winning Trades</p>
+              <p className="text-lg font-bold text-green-600 dark:text-green-400">
                 {statistics.winningTrades}
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
                   / {statistics.totalTrades}
                 </span>
               </p>
@@ -78,10 +78,10 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
               <TrendingDown size={20} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Losing Trades</p>
-              <p className="text-xl font-bold text-red-600 dark:text-red-400">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Losing Trades</p>
+              <p className="text-lg font-bold text-red-600 dark:text-red-400">
                 {statistics.losingTrades}
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
+                <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">
                   / {statistics.totalTrades}
                 </span>
               </p>
@@ -93,32 +93,32 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
         {/* Average Win */}
         <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Win</span>
-          <span className="text-lg font-semibold text-green-600 dark:text-green-400">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Avg. Win</span>
+          <span className="text-base font-semibold text-green-600 dark:text-green-400">
             {formatCurrency(statistics.averageWin)}
           </span>
         </div>
         
         {/* Average Loss */}
         <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Loss</span>
-          <span className="text-lg font-semibold text-red-600 dark:text-red-400">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Avg. Loss</span>
+          <span className="text-base font-semibold text-red-600 dark:text-red-400">
             {formatCurrency(statistics.averageLoss)}
           </span>
         </div>
         
         {/* Largest Win */}
         <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Largest Win</span>
-          <span className="text-lg font-semibold text-green-600 dark:text-green-400">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Largest Win</span>
+          <span className="text-base font-semibold text-green-600 dark:text-green-400">
             {formatCurrency(statistics.largestWin)}
           </span>
         </div>
         
         {/* Largest Loss */}
         <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Largest Loss</span>
-          <span className="text-lg font-semibold text-red-600 dark:text-red-400">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Largest Loss</span>
+          <span className="text-base font-semibold text-red-600 dark:text-red-400">
             {formatCurrency(statistics.largestLoss)}
           </span>
         </div>
@@ -126,27 +126,27 @@ const StatisticsPanel: React.FC<StatisticsPanelProps> = ({ statistics }) => {
       
       {/* Profit Factor */}
       <div className="mt-6">
-        <h3 className="text-lg font-medium text-gray-700 dark:text-gray-200 mb-3">
+        <h3 className="text-base font-medium text-gray-700 dark:text-gray-200 mb-3">
           Additional Metrics
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Profit Factor</span>
-            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Profit Factor</span>
+            <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
               {calculateProfitFactor(statistics)}
             </span>
           </div>
           
           <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Win/Loss Ratio</span>
-            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Win/Loss Ratio</span>
+            <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
               {calculateWinLossRatio(statistics)}
             </span>
           </div>
           
           <div className="flex justify-between items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Risk-Reward Ratio</span>
-            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Risk-Reward Ratio</span>
+            <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
               {calculateRiskRewardRatio(statistics)}
             </span>
           </div>
