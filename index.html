@@ -1,12 +1,35 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Trading Journal</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trading Jurnal - Login Firebase</title>
+  <style>
+    #auth-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 300px;
+      margin: 30px auto;
+    }
+    #logout-btn {
+      display: none;
+      margin: 30px auto;
+      padding: 8px 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="auth-section">
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Parolă" />
+    <button id="login-btn">Login</button>
+    <button id="register-btn">Înregistrare</button>
+  </div>
+
+  <button id="logout-btn">Logout</button>
+
+  <script type="module" src="firebase-init.js"></script>
+
+</body>
 </html>
