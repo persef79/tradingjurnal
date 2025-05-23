@@ -6,13 +6,6 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  query
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDRRwicJZ80nQ8VK8t1QIY9ZTe3SkWwWA8",
@@ -25,7 +18,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
@@ -35,27 +27,31 @@ const logoutBtn = document.getElementById("logout-btn");
 const authSection = document.getElementById("auth-section");
 const mainContent = document.getElementById("main-content");
 
-loginBtn?.addEventListener("click", async () => {
+loginBtn.addEventListener("click", async () => {
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     alert("Logare reușită!");
-  } catch (error) {
-    alert("❌ Eroare la logare: " + error.message);
+  } catch (e) {
+    alert("Eroare la logare: " + e.message);
   }
 });
 
-registerBtn?.addEventListener("click", async () => {
+registerBtn.addEventListener("click", async () => {
   try {
     await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    alert("✅ Cont creat cu succes!");
-  } catch (error) {
-    alert("❌ Eroare la înregistrare: " + error.message);
+    alert("Cont creat cu succes!");
+  } catch (e) {
+    alert("Eroare la înregistrare: " + e.message);
   }
 });
 
-logoutBtn?.addEventListener("click", async () => {
-  await signOut(auth);
-  alert("Te-ai delogat!");
+logoutBtn.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    alert("Te-ai delogat!");
+  } catch (e) {
+    alert("Eroare la delogare: " + e.message);
+  }
 });
 
 onAuthStateChanged(auth, (user) => {
@@ -63,11 +59,9 @@ onAuthStateChanged(auth, (user) => {
     authSection.style.display = "none";
     logoutBtn.style.display = "inline-block";
     mainContent.style.display = "block";
-    console.log("✅ User logat:", user.uid);
   } else {
     authSection.style.display = "flex";
     logoutBtn.style.display = "none";
     mainContent.style.display = "none";
-    console.log("ℹ️ User delogat");
   }
 });
