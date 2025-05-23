@@ -24,44 +24,48 @@ const passwordInput = document.getElementById("password");
 const loginBtn = document.getElementById("login-btn");
 const registerBtn = document.getElementById("register-btn");
 const logoutBtn = document.getElementById("logout-btn");
-const authSection = document.getElementById("auth-section");
-const mainContent = document.getElementById("main-content");
 
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    alert("Logare reușită!");
+    // Nu afișăm nimic
   } catch (e) {
-    alert("Eroare la logare: " + e.message);
+    console.error("Eroare la login:", e.message);
   }
 });
 
 registerBtn.addEventListener("click", async () => {
   try {
     await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    alert("Cont creat cu succes!");
+    // Nu afișăm nimic
   } catch (e) {
-    alert("Eroare la înregistrare: " + e.message);
+    console.error("Eroare la înregistrare:", e.message);
   }
 });
 
 logoutBtn.addEventListener("click", async () => {
   try {
     await signOut(auth);
-    alert("Te-ai delogat!");
+    // Nu afișăm nimic
   } catch (e) {
-    alert("Eroare la delogare: " + e.message);
+    console.error("Eroare la logout:", e.message);
   }
 });
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    authSection.style.display = "none";
+    // Dacă ești logat, ascundem login-ul și înlocuim cu logout
+    emailInput.style.display = "none";
+    passwordInput.style.display = "none";
+    loginBtn.style.display = "none";
+    registerBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
-    mainContent.style.display = "block";
   } else {
-    authSection.style.display = "flex";
+    // Dacă nu ești logat, arătăm login-ul și ascundem logout
+    emailInput.style.display = "inline-block";
+    passwordInput.style.display = "inline-block";
+    loginBtn.style.display = "inline-block";
+    registerBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
-    mainContent.style.display = "none";
   }
 });
