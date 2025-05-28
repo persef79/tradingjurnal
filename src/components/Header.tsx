@@ -1,5 +1,6 @@
-import React from 'react';
-import { TrendingUp, Sun, Moon, Download, Upload } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, Sun, Moon, Download, Upload, LogIn, LogOut, User } from 'lucide-react';
+import AuthModal from './AuthModal';
 
 interface HeaderProps {
   onOpenImport: () => void;
@@ -14,6 +15,9 @@ const Header: React.FC<HeaderProps> = ({
   isDarkMode, 
   toggleDarkMode 
 }) => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,6 +51,41 @@ const Header: React.FC<HeaderProps> = ({
               <Download size={16} className="mr-2" />
               Export
             </button>
+
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-2">
+                <button
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md 
+                           text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 
+                           focus:ring-offset-2 focus:ring-blue-500 transition-colors
+                           dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                >
+                  <User size={16} className="mr-2" />
+                  Profile
+                </button>
+                <button
+                  onClick={() => setIsLoggedIn(false)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md 
+                           text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 
+                           focus:ring-offset-2 focus:ring-blue-500 transition-colors
+                           dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                >
+                  <LogOut size={16} className="mr-2" />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md 
+                         text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 
+                         focus:ring-offset-2 focus:ring-blue-500 transition-colors
+                         dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+              >
+                <LogIn size={16} className="mr-2" />
+                Login
+              </button>
+            )}
             
             <button
               onClick={toggleDarkMode}
@@ -64,6 +103,10 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} />
+      )}
     </header>
   );
 };
