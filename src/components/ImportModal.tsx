@@ -64,14 +64,25 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       const csvData = await readFileContent(file);
       const journalData = parseMT5Data(csvData);
       
-      if (Object.keys(journalData.days).length === 0) {
+      if (!journalData || !journalData.days || Object.keys(journalData.days).length === 0) {
         throw new Error('No valid trade data found in the file');
       }
 
-      // Save to Firestore
+      // Save to Firestore with proper data structure
       const docRef = doc(db, 'trading_data', auth.currentUser.uid);
       await setDoc(docRef, {
-        data: journalData,
+        days: journalData.days || {},
+        statistics: journalData.statistics || {
+          totalTrades: 0,
+          winningTrades: 0,
+          losingTrades: 0,
+          totalProfit: 0,
+          winRate: 0,
+          averageWin: 0,
+          averageLoss: 0,
+          largestWin: 0,
+          largestLoss: 0
+        },
         updatedAt: new Date().toISOString()
       });
       
