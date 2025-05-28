@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, Upload, FileText } from 'lucide-react';
 import { parseMT5Data } from '../utils/mt5Parser';
 import { JournalData } from '../types';
+import { db, auth } from '../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 interface ImportModalProps {
   onClose: () => void;
@@ -50,8 +52,8 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
   };
   
   const handleImport = async () => {
-    if (!file) {
-      setError('Please select a file to import');
+    if (!file || !auth.currentUser) {
+      setError('Please select a file to import and ensure you are logged in');
       return;
     }
     
@@ -65,6 +67,13 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       if (Object.keys(journalData.days).length === 0) {
         throw new Error('No valid trade data found in the file');
       }
+
+      // Save to Firestore
+      const docRef = doc(db, 'trading_data', auth.currentUser.uid);
+      await setDoc(docRef, {
+        data: journalData,
+        updatedAt: new Date().toISOString()
+      });
       
       onImport(journalData);
       onClose();
