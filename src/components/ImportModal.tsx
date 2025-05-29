@@ -73,7 +73,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       }
 
       setProgress('Processing data...');
-      // Ensure all data is properly structured before saving
+      // Convert dates and ensure all numbers are valid
       const sanitizedData = {
         days: Object.fromEntries(
           Object.entries(journalData.days).map(([date, day]) => [
@@ -84,8 +84,8 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
                 id: trade.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 symbol: trade.symbol || '',
                 type: trade.type || 'buy',
-                openTime: trade.openTime ? trade.openTime.toISOString() : new Date().toISOString(),
-                closeTime: trade.closeTime ? trade.closeTime.toISOString() : new Date().toISOString(),
+                openTime: trade.openTime instanceof Date ? trade.openTime.toISOString() : new Date().toISOString(),
+                closeTime: trade.closeTime instanceof Date ? trade.closeTime.toISOString() : new Date().toISOString(),
                 openPrice: Number(trade.openPrice) || 0,
                 closePrice: Number(trade.closePrice) || 0,
                 volume: Number(trade.volume) || 0,
@@ -113,10 +113,10 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       };
 
       setProgress('Saving to Firebase...');
-      // Save to Firestore with sanitized data
+      // Save to Firestore
       const docRef = doc(db, 'trading_data', auth.currentUser.uid);
       await setDoc(docRef, {
-        ...sanitizedData,
+        data: sanitizedData,
         updatedAt: new Date().toISOString()
       });
       
