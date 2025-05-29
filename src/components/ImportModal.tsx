@@ -15,6 +15,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState<string>('');
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -61,52 +62,57 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
     setError(null);
     
     try {
+      setProgress('Reading file...');
       const csvData = await readFileContent(file);
+      
+      setProgress('Parsing data...');
       const journalData = parseMT5Data(csvData);
       
       if (!journalData || !journalData.days || Object.keys(journalData.days).length === 0) {
         throw new Error('No valid trade data found in the file');
       }
 
+      setProgress('Processing data...');
       // Ensure all data is properly structured before saving
       const sanitizedData = {
         days: Object.fromEntries(
           Object.entries(journalData.days).map(([date, day]) => [
             date,
             {
-              date: date,
+              date,
               trades: day.trades.map(trade => ({
-                ...trade,
-                id: trade.id || String(Date.now()),
-                openTime: trade.openTime || new Date(),
-                closeTime: trade.closeTime || new Date(),
-                openPrice: trade.openPrice || 0,
-                closePrice: trade.closePrice || 0,
-                volume: trade.volume || 0,
-                profit: trade.profit || 0,
-                commission: trade.commission || 0,
-                swap: trade.swap || 0,
-                type: trade.type || 'buy'
+                id: trade.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                symbol: trade.symbol || '',
+                type: trade.type || 'buy',
+                openTime: trade.openTime ? trade.openTime.toISOString() : new Date().toISOString(),
+                closeTime: trade.closeTime ? trade.closeTime.toISOString() : new Date().toISOString(),
+                openPrice: Number(trade.openPrice) || 0,
+                closePrice: Number(trade.closePrice) || 0,
+                volume: Number(trade.volume) || 0,
+                profit: Number(trade.profit) || 0,
+                commission: Number(trade.commission) || 0,
+                swap: Number(trade.swap) || 0
               })),
               observations: day.observations || '',
-              totalProfit: day.totalProfit || 0,
-              tradeCount: day.tradeCount || 0
+              totalProfit: Number(day.totalProfit) || 0,
+              tradeCount: Number(day.tradeCount) || 0
             }
           ])
         ),
         statistics: {
-          totalTrades: journalData.statistics.totalTrades || 0,
-          winningTrades: journalData.statistics.winningTrades || 0,
-          losingTrades: journalData.statistics.losingTrades || 0,
-          totalProfit: journalData.statistics.totalProfit || 0,
-          winRate: journalData.statistics.winRate || 0,
-          averageWin: journalData.statistics.averageWin || 0,
-          averageLoss: journalData.statistics.averageLoss || 0,
-          largestWin: journalData.statistics.largestWin || 0,
-          largestLoss: journalData.statistics.largestLoss || 0
+          totalTrades: Number(journalData.statistics.totalTrades) || 0,
+          winningTrades: Number(journalData.statistics.winningTrades) || 0,
+          losingTrades: Number(journalData.statistics.losingTrades) || 0,
+          totalProfit: Number(journalData.statistics.totalProfit) || 0,
+          winRate: Number(journalData.statistics.winRate) || 0,
+          averageWin: Number(journalData.statistics.averageWin) || 0,
+          averageLoss: Number(journalData.statistics.averageLoss) || 0,
+          largestWin: Number(journalData.statistics.largestWin) || 0,
+          largestLoss: Number(journalData.statistics.largestLoss) || 0
         }
       };
 
+      setProgress('Saving to Firebase...');
       // Save to Firestore with sanitized data
       const docRef = doc(db, 'trading_data', auth.currentUser.uid);
       await setDoc(docRef, {
@@ -118,8 +124,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       onClose();
     } catch (err) {
       console.error('Import error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to parse the file');
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to process the file');
       setIsLoading(false);
     }
   };
@@ -210,6 +215,15 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
             </div>
           </div>
           
+          {isLoading && (
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-md">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                <span>{progress}</span>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="mt-4 p-3 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-md text-sm">
               {error}
