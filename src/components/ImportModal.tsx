@@ -68,27 +68,56 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
         throw new Error('No valid trade data found in the file');
       }
 
-      // Save to Firestore with proper data structure
+      // Ensure all data is properly structured before saving
+      const sanitizedData = {
+        days: Object.fromEntries(
+          Object.entries(journalData.days).map(([date, day]) => [
+            date,
+            {
+              date: date,
+              trades: day.trades.map(trade => ({
+                ...trade,
+                id: trade.id || String(Date.now()),
+                openTime: trade.openTime || new Date(),
+                closeTime: trade.closeTime || new Date(),
+                openPrice: trade.openPrice || 0,
+                closePrice: trade.closePrice || 0,
+                volume: trade.volume || 0,
+                profit: trade.profit || 0,
+                commission: trade.commission || 0,
+                swap: trade.swap || 0,
+                type: trade.type || 'buy'
+              })),
+              observations: day.observations || '',
+              totalProfit: day.totalProfit || 0,
+              tradeCount: day.tradeCount || 0
+            }
+          ])
+        ),
+        statistics: {
+          totalTrades: journalData.statistics.totalTrades || 0,
+          winningTrades: journalData.statistics.winningTrades || 0,
+          losingTrades: journalData.statistics.losingTrades || 0,
+          totalProfit: journalData.statistics.totalProfit || 0,
+          winRate: journalData.statistics.winRate || 0,
+          averageWin: journalData.statistics.averageWin || 0,
+          averageLoss: journalData.statistics.averageLoss || 0,
+          largestWin: journalData.statistics.largestWin || 0,
+          largestLoss: journalData.statistics.largestLoss || 0
+        }
+      };
+
+      // Save to Firestore with sanitized data
       const docRef = doc(db, 'trading_data', auth.currentUser.uid);
       await setDoc(docRef, {
-        days: journalData.days || {},
-        statistics: journalData.statistics || {
-          totalTrades: 0,
-          winningTrades: 0,
-          losingTrades: 0,
-          totalProfit: 0,
-          winRate: 0,
-          averageWin: 0,
-          averageLoss: 0,
-          largestWin: 0,
-          largestLoss: 0
-        },
+        ...sanitizedData,
         updatedAt: new Date().toISOString()
       });
       
-      onImport(journalData);
+      onImport(sanitizedData);
       onClose();
     } catch (err) {
+      console.error('Import error:', err);
       setError(err instanceof Error ? err.message : 'Failed to parse the file');
     } finally {
       setIsLoading(false);
