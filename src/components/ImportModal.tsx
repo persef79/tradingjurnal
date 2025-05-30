@@ -74,7 +74,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
 
       setProgress('Processing data...');
       
-      // Process the data with minimal transformations
+      // Process the data with proper null handling for undefined values
       const processedData = {
         days: Object.fromEntries(
           Object.entries(journalData.days).map(([date, day]) => [
@@ -85,31 +85,31 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
                 id: trade.id,
                 symbol: trade.symbol,
                 type: trade.type,
-                openTime: trade.openTime?.toISOString(),
-                closeTime: trade.closeTime?.toISOString(),
-                openPrice: Number(trade.openPrice),
-                closePrice: Number(trade.closePrice),
-                volume: Number(trade.volume),
-                profit: Number(trade.profit),
+                openTime: trade.openTime instanceof Date ? trade.openTime.toISOString() : null,
+                closeTime: trade.closeTime instanceof Date ? trade.closeTime.toISOString() : null,
+                openPrice: Number(trade.openPrice) || 0,
+                closePrice: Number(trade.closePrice) || 0,
+                volume: Number(trade.volume) || 0,
+                profit: Number(trade.profit) || 0,
                 commission: Number(trade.commission || 0),
                 swap: Number(trade.swap || 0)
               })),
               observations: day.observations || '',
-              totalProfit: Number(day.totalProfit),
+              totalProfit: Number(day.totalProfit) || 0,
               tradeCount: day.trades.length
             }
           ])
         ),
         statistics: {
-          totalTrades: journalData.statistics.totalTrades,
-          winningTrades: journalData.statistics.winningTrades,
-          losingTrades: journalData.statistics.losingTrades,
-          totalProfit: Number(journalData.statistics.totalProfit),
-          winRate: Number(journalData.statistics.winRate),
-          averageWin: Number(journalData.statistics.averageWin),
-          averageLoss: Number(journalData.statistics.averageLoss),
-          largestWin: Number(journalData.statistics.largestWin),
-          largestLoss: Number(journalData.statistics.largestLoss)
+          totalTrades: journalData.statistics.totalTrades || 0,
+          winningTrades: journalData.statistics.winningTrades || 0,
+          losingTrades: journalData.statistics.losingTrades || 0,
+          totalProfit: Number(journalData.statistics.totalProfit) || 0,
+          winRate: Number(journalData.statistics.winRate) || 0,
+          averageWin: Number(journalData.statistics.averageWin) || 0,
+          averageLoss: Number(journalData.statistics.averageLoss) || 0,
+          largestWin: Number(journalData.statistics.largestWin) || 0,
+          largestLoss: Number(journalData.statistics.largestLoss) || 0
         }
       };
 
