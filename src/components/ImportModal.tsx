@@ -74,28 +74,23 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
 
       setProgress('Processing data...');
       // Convert dates and ensure all numbers are valid
-      const sanitizedData = {
+      const processedData = {
         days: Object.fromEntries(
           Object.entries(journalData.days).map(([date, day]) => [
             date,
             {
-              date,
+              ...day,
               trades: day.trades.map(trade => ({
-                id: trade.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                symbol: trade.symbol || '',
-                type: trade.type || 'buy',
-                openTime: trade.openTime instanceof Date ? trade.openTime.toISOString() : new Date().toISOString(),
-                closeTime: trade.closeTime instanceof Date ? trade.closeTime.toISOString() : new Date().toISOString(),
+                ...trade,
+                openTime: trade.openTime?.toISOString() || new Date().toISOString(),
+                closeTime: trade.closeTime?.toISOString() || new Date().toISOString(),
                 openPrice: Number(trade.openPrice) || 0,
                 closePrice: Number(trade.closePrice) || 0,
                 volume: Number(trade.volume) || 0,
                 profit: Number(trade.profit) || 0,
                 commission: Number(trade.commission) || 0,
                 swap: Number(trade.swap) || 0
-              })),
-              observations: day.observations || '',
-              totalProfit: Number(day.totalProfit) || 0,
-              tradeCount: Number(day.tradeCount) || 0
+              }))
             }
           ])
         ),
@@ -113,14 +108,15 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       };
 
       setProgress('Saving to Firebase...');
-      // Save to Firestore
       const docRef = doc(db, 'trading_data', auth.currentUser.uid);
+      
+      // Save the processed data to Firebase
       await setDoc(docRef, {
-        data: sanitizedData,
-        updatedAt: new Date().toISOString()
+        data: processedData,
+        lastUpdated: new Date().toISOString()
       });
       
-      onImport(sanitizedData);
+      onImport(processedData);
       onClose();
     } catch (err) {
       console.error('Import error:', err);
