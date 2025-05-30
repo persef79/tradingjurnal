@@ -74,26 +74,35 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
 
       setProgress('Processing data...');
       
-      // Process the data with proper null handling for undefined values
+      // Process and validate each trade
       const processedData = {
         days: Object.fromEntries(
           Object.entries(journalData.days).map(([date, day]) => [
             date,
             {
               date,
-              trades: day.trades.map(trade => ({
-                id: trade.id,
-                symbol: trade.symbol,
-                type: trade.type,
-                openTime: trade.openTime instanceof Date ? trade.openTime.toISOString() : null,
-                closeTime: trade.closeTime instanceof Date ? trade.closeTime.toISOString() : null,
-                openPrice: Number(trade.openPrice) || 0,
-                closePrice: Number(trade.closePrice) || 0,
-                volume: Number(trade.volume) || 0,
-                profit: Number(trade.profit) || 0,
-                commission: Number(trade.commission || 0),
-                swap: Number(trade.swap || 0)
-              })),
+              trades: day.trades.map(trade => {
+                // Generate a unique ID if none exists
+                const tradeId = trade.id || `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                
+                // Ensure dates are valid or null
+                const openTime = trade.openTime instanceof Date ? trade.openTime.toISOString() : null;
+                const closeTime = trade.closeTime instanceof Date ? trade.closeTime.toISOString() : null;
+                
+                return {
+                  id: tradeId,
+                  symbol: trade.symbol || '',
+                  type: trade.type || 'buy',
+                  openTime,
+                  closeTime,
+                  openPrice: Number(trade.openPrice) || 0,
+                  closePrice: Number(trade.closePrice) || 0,
+                  volume: Number(trade.volume) || 0,
+                  profit: Number(trade.profit) || 0,
+                  commission: Number(trade.commission || 0),
+                  swap: Number(trade.swap || 0)
+                };
+              }),
               observations: day.observations || '',
               totalProfit: Number(day.totalProfit) || 0,
               tradeCount: day.trades.length
@@ -101,9 +110,9 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
           ])
         ),
         statistics: {
-          totalTrades: journalData.statistics.totalTrades || 0,
-          winningTrades: journalData.statistics.winningTrades || 0,
-          losingTrades: journalData.statistics.losingTrades || 0,
+          totalTrades: Number(journalData.statistics.totalTrades) || 0,
+          winningTrades: Number(journalData.statistics.winningTrades) || 0,
+          losingTrades: Number(journalData.statistics.losingTrades) || 0,
           totalProfit: Number(journalData.statistics.totalProfit) || 0,
           winRate: Number(journalData.statistics.winRate) || 0,
           averageWin: Number(journalData.statistics.averageWin) || 0,
@@ -120,7 +129,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
         await setDoc(docRef, {
           data: processedData,
           lastUpdated: new Date().toISOString()
-        }, { merge: true });
+        });
         
         onImport(processedData);
         onClose();
@@ -131,6 +140,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
     } catch (err) {
       console.error('Import error:', err);
       setError(err instanceof Error ? err.message : 'Failed to process the file');
+    } finally {
       setIsLoading(false);
     }
   };
