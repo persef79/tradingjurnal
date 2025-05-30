@@ -73,51 +73,61 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
       }
 
       setProgress('Processing data...');
-      // Convert dates and ensure all numbers are valid
+      
+      // Process the data with minimal transformations
       const processedData = {
         days: Object.fromEntries(
           Object.entries(journalData.days).map(([date, day]) => [
             date,
             {
-              ...day,
+              date,
               trades: day.trades.map(trade => ({
-                ...trade,
-                openTime: trade.openTime?.toISOString() || new Date().toISOString(),
-                closeTime: trade.closeTime?.toISOString() || new Date().toISOString(),
-                openPrice: Number(trade.openPrice) || 0,
-                closePrice: Number(trade.closePrice) || 0,
-                volume: Number(trade.volume) || 0,
-                profit: Number(trade.profit) || 0,
-                commission: Number(trade.commission) || 0,
-                swap: Number(trade.swap) || 0
-              }))
+                id: trade.id,
+                symbol: trade.symbol,
+                type: trade.type,
+                openTime: trade.openTime?.toISOString(),
+                closeTime: trade.closeTime?.toISOString(),
+                openPrice: Number(trade.openPrice),
+                closePrice: Number(trade.closePrice),
+                volume: Number(trade.volume),
+                profit: Number(trade.profit),
+                commission: Number(trade.commission || 0),
+                swap: Number(trade.swap || 0)
+              })),
+              observations: day.observations || '',
+              totalProfit: Number(day.totalProfit),
+              tradeCount: day.trades.length
             }
           ])
         ),
         statistics: {
-          totalTrades: Number(journalData.statistics.totalTrades) || 0,
-          winningTrades: Number(journalData.statistics.winningTrades) || 0,
-          losingTrades: Number(journalData.statistics.losingTrades) || 0,
-          totalProfit: Number(journalData.statistics.totalProfit) || 0,
-          winRate: Number(journalData.statistics.winRate) || 0,
-          averageWin: Number(journalData.statistics.averageWin) || 0,
-          averageLoss: Number(journalData.statistics.averageLoss) || 0,
-          largestWin: Number(journalData.statistics.largestWin) || 0,
-          largestLoss: Number(journalData.statistics.largestLoss) || 0
+          totalTrades: journalData.statistics.totalTrades,
+          winningTrades: journalData.statistics.winningTrades,
+          losingTrades: journalData.statistics.losingTrades,
+          totalProfit: Number(journalData.statistics.totalProfit),
+          winRate: Number(journalData.statistics.winRate),
+          averageWin: Number(journalData.statistics.averageWin),
+          averageLoss: Number(journalData.statistics.averageLoss),
+          largestWin: Number(journalData.statistics.largestWin),
+          largestLoss: Number(journalData.statistics.largestLoss)
         }
       };
 
       setProgress('Saving to Firebase...');
-      const docRef = doc(db, 'trading_data', auth.currentUser.uid);
       
-      // Save the processed data to Firebase
-      await setDoc(docRef, {
-        data: processedData,
-        lastUpdated: new Date().toISOString()
-      });
-      
-      onImport(processedData);
-      onClose();
+      try {
+        const docRef = doc(db, 'trading_data', auth.currentUser.uid);
+        await setDoc(docRef, {
+          data: processedData,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true });
+        
+        onImport(processedData);
+        onClose();
+      } catch (firebaseError) {
+        console.error('Firebase save error:', firebaseError);
+        throw new Error('Failed to save data to Firebase. Please try again.');
+      }
     } catch (err) {
       console.error('Import error:', err);
       setError(err instanceof Error ? err.message : 'Failed to process the file');
