@@ -15,18 +15,24 @@ function normalizeHeader(header: string): string {
     .trim();
 }
 
-function mapTradeType(type: string): 'buy' | 'close' | '' {
+function getTradeActionType(type: string): 'open' | 'close' | '' {
   // Normalize the type string
   const normalizedType = type.toLowerCase().trim();
   
-  // Map common MT5 trade type variations
-  if (['buy', 'balance', 'in', 'long', 'opened'].includes(normalizedType)) {
-    return 'buy';
+  // Map common MT5 trade type variations to actions
+  if (['buy', 'sell', 'balance', 'in', 'opened'].includes(normalizedType)) {
+    return 'open';
   }
-  if (['sell', 'out', 'short', 'closed', 'close'].includes(normalizedType)) {
+  if (['out', 'closed', 'close'].includes(normalizedType)) {
     return 'close';
   }
   return '';
+}
+
+function getTradeDirection(type: string): 'buy' | 'sell' {
+  // Normalize the type string
+  const normalizedType = type.toLowerCase().trim();
+  return normalizedType.includes('sell') ? 'sell' : 'buy';
 }
 
 function parseCsvToObjects(csvData: string): CsvRow[] {
@@ -87,7 +93,8 @@ export function parseMT5Data(csvData: string): JournalData {
       const commissionField = Object.keys(row).find(k => k.includes('commission')) || 'commission';
       const swapField = Object.keys(row).find(k => k.includes('swap')) || 'swap';
 
-      const type = mapTradeType(row[typeField]);
+      const action = getTradeActionType(row[typeField]);
+      const direction = getTradeDirection(row[typeField]);
       const orderId = row[orderField];
       const symbol = row[symbolField];
       const time = row[timeField];
@@ -97,7 +104,7 @@ export function parseMT5Data(csvData: string): JournalData {
       const commission = parseFloat(row[commissionField]) || 0;
       const swap = parseFloat(row[swapField]) || 0;
 
-      if (!orderId || !type) {
+      if (!orderId || !action) {
         console.warn(`Skipping row ${index + 2}: Invalid order ID or trade type`);
         return;
       }
@@ -110,18 +117,18 @@ export function parseMT5Data(csvData: string): JournalData {
 
       processedRows++;
 
-      if (type === 'buy') {
+      if (action === 'open') {
         openTradesMap.set(orderId, {
           id: orderId,
           symbol,
-          type: 'buy',
+          type: direction,
           openTime: tradeTime,
           openPrice: price,
           volume,
           commission,
           swap
         });
-      } else if (type === 'close') {
+      } else if (action === 'close') {
         const openTrade = openTradesMap.get(orderId);
         if (openTrade && openTrade.openTime) {
           trades.push({
