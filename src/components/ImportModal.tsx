@@ -85,8 +85,8 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImport }) => {
                 id: trade.id || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 symbol: trade.symbol || '',
                 type: trade.type || 'buy',
-                openTime: trade.openTime ? new Date(trade.openTime).toISOString() : null,
-                closeTime: trade.closeTime ? new Date(trade.closeTime).toISOString() : null,
+                openTime: trade.openTime, // Keep as Date object
+                closeTime: trade.closeTime, // Keep as Date object
                 openPrice: Number(trade.openPrice) || 0,
                 closePrice: Number(trade.closePrice) || 0,
                 volume: Number(trade.volume) || 0,
