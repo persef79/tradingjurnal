@@ -51,16 +51,6 @@ function parseCsvToObjects(csvData: string): CsvRow[] {
     headerMap.set(normalized, header.trim());
   });
 
-  // Validate required headers are present
-  const requiredHeaders = ['type', 'order', 'time', 'price'];
-  const missingHeaders = requiredHeaders.filter(req => 
-    !Array.from(headerMap.keys()).some(h => h.includes(req))
-  );
-
-  if (missingHeaders.length > 0) {
-    throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
-  }
-
   const rows = lines.slice(1);
   return rows.map(line => {
     const values = line.split(delimiter).map(c => c.trim());
@@ -74,87 +64,143 @@ function parseCsvToObjects(csvData: string): CsvRow[] {
   });
 }
 
+function detectCsvFormat(headers: string[]): 'complete' | 'paired' {
+  const normalizedHeaders = headers.map(h => normalizeHeader(h));
+  
+  // Check for headers that indicate complete trade records
+  const completeTradeHeaders = [
+    'timeclose',
+    'priceclose',
+    'closetime',
+    'closeprice'
+  ];
+
+  return completeTradeHeaders.some(header => 
+    normalizedHeaders.some(h => h.includes(header))
+  ) ? 'complete' : 'paired';
+}
+
+function parseCompleteTrades(rows: CsvRow[]): Trade[] {
+  return rows.map((row, index) => {
+    // Find the relevant fields using flexible matching
+    const symbolField = Object.keys(row).find(k => k.includes('symbol') || k.includes('deal')) || '';
+    const typeField = Object.keys(row).find(k => k.includes('type')) || '';
+    const openTimeField = Object.keys(row).find(k => k.includes('opentime') || k.includes('timein')) || '';
+    const closeTimeField = Object.keys(row).find(k => k.includes('closetime') || k.includes('timeout')) || '';
+    const openPriceField = Object.keys(row).find(k => k.includes('openprice') || k.includes('pricein')) || '';
+    const closePriceField = Object.keys(row).find(k => k.includes('closeprice') || k.includes('priceout')) || '';
+    const volumeField = Object.keys(row).find(k => k.includes('volume') || k.includes('lot')) || '';
+    const profitField = Object.keys(row).find(k => k.includes('profit')) || '';
+    const commissionField = Object.keys(row).find(k => k.includes('commission')) || '';
+    const swapField = Object.keys(row).find(k => k.includes('swap')) || '';
+
+    const openTime = new Date(row[openTimeField]);
+    const closeTime = new Date(row[closeTimeField]);
+
+    if (isNaN(openTime.getTime()) || isNaN(closeTime.getTime())) {
+      console.warn(`Skipping row ${index + 2}: Invalid date format`);
+      return null;
+    }
+
+    return {
+      id: `trade-${index}`,
+      symbol: row[symbolField],
+      type: getTradeDirection(row[typeField]),
+      openTime,
+      closeTime,
+      openPrice: parseFloat(row[openPriceField]) || 0,
+      closePrice: parseFloat(row[closePriceField]) || 0,
+      volume: parseFloat(row[volumeField]) || 0,
+      profit: parseFloat(row[profitField]) || 0,
+      commission: parseFloat(row[commissionField]) || 0,
+      swap: parseFloat(row[swapField]) || 0
+    };
+  }).filter((trade): trade is Trade => trade !== null);
+}
+
+function parsePairedTrades(rows: CsvRow[]): Trade[] {
+  const trades: Trade[] = [];
+  const openTradesMap = new Map<string, Partial<Trade>>();
+
+  rows.forEach((row, index) => {
+    const typeField = Object.keys(row).find(k => k.includes('type')) || 'type';
+    const orderField = Object.keys(row).find(k => k.includes('order')) || 'order';
+    const symbolField = Object.keys(row).find(k => k.includes('symbol') || k.includes('deal')) || 'symbol';
+    const timeField = Object.keys(row).find(k => k.includes('time')) || 'time';
+    const volumeField = Object.keys(row).find(k => k.includes('volume') || k.includes('lot')) || 'volume';
+    const priceField = Object.keys(row).find(k => k.includes('price')) || 'price';
+    const profitField = Object.keys(row).find(k => k.includes('profit')) || 'profit';
+    const commissionField = Object.keys(row).find(k => k.includes('commission')) || 'commission';
+    const swapField = Object.keys(row).find(k => k.includes('swap')) || 'swap';
+
+    const action = getTradeActionType(row[typeField]);
+    const direction = getTradeDirection(row[typeField]);
+    const orderId = row[orderField];
+    const symbol = row[symbolField];
+    const time = new Date(row[timeField]);
+    const volume = parseFloat(row[volumeField]) || 0;
+    const price = parseFloat(row[priceField]) || 0;
+    const profit = parseFloat(row[profitField]) || 0;
+    const commission = parseFloat(row[commissionField]) || 0;
+    const swap = parseFloat(row[swapField]) || 0;
+
+    if (!orderId || !action || isNaN(time.getTime())) {
+      console.warn(`Skipping row ${index + 2}: Invalid data`);
+      return;
+    }
+
+    if (action === 'open') {
+      openTradesMap.set(orderId, {
+        id: orderId,
+        symbol,
+        type: direction,
+        openTime: time,
+        openPrice: price,
+        volume,
+        commission,
+        swap
+      });
+    } else if (action === 'close') {
+      const openTrade = openTradesMap.get(orderId);
+      if (openTrade && openTrade.openTime) {
+        trades.push({
+          id: orderId,
+          symbol: openTrade.symbol || symbol,
+          type: openTrade.type || 'buy',
+          openTime: openTrade.openTime,
+          closeTime: time,
+          openPrice: openTrade.openPrice || 0,
+          closePrice: price,
+          volume: openTrade.volume || volume,
+          profit,
+          commission: (openTrade.commission || 0) + commission,
+          swap: (openTrade.swap || 0) + swap
+        });
+        openTradesMap.delete(orderId);
+      }
+    }
+  });
+
+  return trades;
+}
+
 export function parseMT5Data(csvData: string): JournalData {
   try {
     const rows = parseCsvToObjects(csvData);
-    const trades: Trade[] = [];
-    const openTradesMap = new Map<string, Partial<Trade>>();
-    let processedRows = 0;
-
-    rows.forEach((row, index) => {
-      // Find the actual column names in the CSV that correspond to our expected fields
-      const typeField = Object.keys(row).find(k => k.includes('type')) || 'type';
-      const orderField = Object.keys(row).find(k => k.includes('order')) || 'order';
-      const symbolField = Object.keys(row).find(k => k.includes('symbol') || k.includes('deal')) || 'symbol';
-      const timeField = Object.keys(row).find(k => k.includes('time')) || 'time';
-      const volumeField = Object.keys(row).find(k => k.includes('volume') || k.includes('lot')) || 'volume';
-      const priceField = Object.keys(row).find(k => k.includes('price')) || 'price';
-      const profitField = Object.keys(row).find(k => k.includes('profit')) || 'profit';
-      const commissionField = Object.keys(row).find(k => k.includes('commission')) || 'commission';
-      const swapField = Object.keys(row).find(k => k.includes('swap')) || 'swap';
-
-      const action = getTradeActionType(row[typeField]);
-      const direction = getTradeDirection(row[typeField]);
-      const orderId = row[orderField];
-      const symbol = row[symbolField];
-      const time = row[timeField];
-      const volume = parseFloat(row[volumeField]) || 0;
-      const price = parseFloat(row[priceField]) || 0;
-      const profit = parseFloat(row[profitField]) || 0;
-      const commission = parseFloat(row[commissionField]) || 0;
-      const swap = parseFloat(row[swapField]) || 0;
-
-      if (!orderId || !action) {
-        console.warn(`Skipping row ${index + 2}: Invalid order ID or trade type`);
-        return;
-      }
-
-      const tradeTime = new Date(time);
-      if (isNaN(tradeTime.getTime())) {
-        console.warn(`Skipping row ${index + 2}: Invalid date format`);
-        return;
-      }
-
-      processedRows++;
-
-      if (action === 'open') {
-        openTradesMap.set(orderId, {
-          id: orderId,
-          symbol,
-          type: direction,
-          openTime: tradeTime,
-          openPrice: price,
-          volume,
-          commission,
-          swap
-        });
-      } else if (action === 'close') {
-        const openTrade = openTradesMap.get(orderId);
-        if (openTrade && openTrade.openTime) {
-          trades.push({
-            id: orderId,
-            symbol: openTrade.symbol || symbol,
-            type: openTrade.type || 'buy',
-            openTime: openTrade.openTime,
-            closeTime: tradeTime,
-            openPrice: openTrade.openPrice || 0,
-            closePrice: price,
-            volume: openTrade.volume || volume,
-            profit,
-            commission: (openTrade.commission || 0) + commission,
-            swap: (openTrade.swap || 0) + swap
-          });
-          openTradesMap.delete(orderId);
-        }
-      }
-    });
-
-    if (processedRows === 0) {
+    if (rows.length === 0) {
       throw new Error('No valid rows found in the CSV file. Please check the file format.');
     }
 
+    // Detect the CSV format based on headers
+    const format = detectCsvFormat(Object.keys(rows[0]));
+    
+    // Parse trades based on the detected format
+    const trades = format === 'complete' 
+      ? parseCompleteTrades(rows)
+      : parsePairedTrades(rows);
+
     if (trades.length === 0) {
-      throw new Error('No complete trades found. Make sure the CSV contains both opening and closing positions.');
+      throw new Error('No valid trades found in the CSV file. Please check the file format.');
     }
 
     // Group trades by day
