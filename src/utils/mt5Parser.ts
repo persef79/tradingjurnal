@@ -14,28 +14,22 @@ function normalizeHeader(header: string): string {
     .trim();
 }
 
-function getTradeActionType(type: string, direction: string): 'open' | 'close' | '' {
+function getTradeActionType(type: string): 'open' | 'close' | '' {
   const normalizedType = type.toLowerCase().trim();
-  const normalizedDirection = direction?.toLowerCase().trim() || '';
   
   if (normalizedType === 'buy') return 'open';
   if (normalizedType === 'close') return 'close';
   
-  // Handle cases where type might be combined with direction
-  if (normalizedDirection === 'long' && normalizedType === 'buy') return 'open';
-  if (normalizedDirection === 'short' && normalizedType === 'close') return 'close';
-  
   return '';
 }
 
-function getTradeDirection(type: string, direction: string): 'buy' | 'sell' {
-  const normalizedType = type.toLowerCase().trim();
+function getTradeDirection(direction: string): 'buy' | 'sell' {
   const normalizedDirection = direction?.toLowerCase().trim() || '';
   
   if (normalizedDirection === 'long') return 'buy';
   if (normalizedDirection === 'short') return 'sell';
-  if (normalizedType === 'buy') return 'buy';
-  return 'sell';
+  
+  return 'buy'; // Default to buy if direction is unclear
 }
 
 function parseCsvToObjects(csvData: string): CsvRow[] {
@@ -46,13 +40,12 @@ function parseCsvToObjects(csvData: string): CsvRow[] {
 
   const delimiter = detectDelimiter(lines[0]);
   const headers = lines[0].split(delimiter).map(h => h.trim());
-  const normalizedHeaders = headers.map(normalizeHeader);
-
+  
   return lines.slice(1).map(line => {
     const values = line.split(delimiter).map(v => v.trim());
     const row: CsvRow = {};
     
-    normalizedHeaders.forEach((header, index) => {
+    headers.forEach((header, index) => {
       row[header] = values[index] || '';
     });
     
@@ -65,16 +58,17 @@ function parseTrades(rows: CsvRow[]): Trade[] {
   const openTradesMap = new Map<string, Partial<Trade>>();
 
   rows.forEach((row, index) => {
-    const type = row['type'] || '';
-    const direction = row['direction'] || '';
-    const symbol = row['deal'] || '';
-    const timeStr = row['time'] || '';
-    const volume = parseFloat(row['volume']) || 0;
-    const price = parseFloat(row['price']) || 0;
-    const profit = parseFloat(row['profit']) || 0;
-    const commission = parseFloat(row['commission']) || 0;
-    const swap = parseFloat(row['swap']) || 0;
-    const order = row['order'] || `trade-${index}`;
+    // Use exact column names from your CSV format
+    const symbol = row['Deal'] || '';
+    const timeStr = row['Time'] || '';
+    const type = row['Type'] || '';
+    const direction = row['Direction'] || '';
+    const volume = parseFloat(row['Volume']) || 0;
+    const price = parseFloat(row['Price']) || 0;
+    const order = row['Order'] || '';
+    const profit = parseFloat(row['Profit']) || 0;
+    const commission = parseFloat(row['Commission']) || 0;
+    const swap = parseFloat(row['Swap']) || 0;
 
     const time = new Date(timeStr);
     if (isNaN(time.getTime())) {
@@ -82,8 +76,8 @@ function parseTrades(rows: CsvRow[]): Trade[] {
       return;
     }
 
-    const action = getTradeActionType(type, direction);
-    const tradeDirection = getTradeDirection(type, direction);
+    const action = getTradeActionType(type);
+    const tradeDirection = getTradeDirection(direction);
 
     if (action === 'open') {
       openTradesMap.set(order, {
