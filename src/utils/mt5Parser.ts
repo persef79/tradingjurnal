@@ -53,61 +53,67 @@ function parseCsvToObjects(csvData: string): CsvRow[] {
   });
 }
 
+function parseDateTime(dateStr: string): Date {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date format: ${dateStr}`);
+  }
+  return date;
+}
+
 function parseTrades(rows: CsvRow[]): Trade[] {
   const trades: Trade[] = [];
   const openTradesMap = new Map<string, Partial<Trade>>();
 
   rows.forEach((row, index) => {
-    // Use exact column names from your CSV format
-    const symbol = row['Deal'] || '';
-    const timeStr = row['Time'] || '';
-    const type = row['Type'] || '';
-    const direction = row['Direction'] || '';
-    const volume = parseFloat(row['Volume']) || 0;
-    const price = parseFloat(row['Price']) || 0;
-    const order = row['Order'] || '';
-    const profit = parseFloat(row['Profit']) || 0;
-    const commission = parseFloat(row['Commission']) || 0;
-    const swap = parseFloat(row['Swap']) || 0;
+    try {
+      const symbol = row['Deal'] || '';
+      const timeStr = row['Time'] || '';
+      const type = row['Type'] || '';
+      const direction = row['Direction'] || '';
+      const volume = parseFloat(row['Volume']) || 0;
+      const price = parseFloat(row['Price']) || 0;
+      const order = row['Order'] || '';
+      const profit = parseFloat(row['Profit']) || 0;
+      const commission = parseFloat(row['Commission']) || 0;
+      const swap = parseFloat(row['Swap']) || 0;
 
-    const time = new Date(timeStr);
-    if (isNaN(time.getTime())) {
-      console.warn(`Skipping row ${index + 2}: Invalid date format`);
-      return;
-    }
+      const time = parseDateTime(timeStr);
+      const action = getTradeActionType(type);
+      const tradeDirection = getTradeDirection(direction);
 
-    const action = getTradeActionType(type);
-    const tradeDirection = getTradeDirection(direction);
-
-    if (action === 'open') {
-      openTradesMap.set(order, {
-        id: order,
-        symbol,
-        type: tradeDirection,
-        openTime: time,
-        openPrice: price,
-        volume,
-        commission,
-        swap
-      });
-    } else if (action === 'close') {
-      const openTrade = openTradesMap.get(order);
-      if (openTrade && openTrade.openTime) {
-        trades.push({
+      if (action === 'open') {
+        openTradesMap.set(order, {
           id: order,
-          symbol: openTrade.symbol || symbol,
-          type: openTrade.type || 'buy',
-          openTime: openTrade.openTime,
-          closeTime: time,
-          openPrice: openTrade.openPrice || 0,
-          closePrice: price,
-          volume: openTrade.volume || volume,
-          profit,
-          commission: (openTrade.commission || 0) + commission,
-          swap: (openTrade.swap || 0) + swap
+          symbol,
+          type: tradeDirection,
+          openTime: time,
+          openPrice: price,
+          volume,
+          commission,
+          swap
         });
-        openTradesMap.delete(order);
+      } else if (action === 'close') {
+        const openTrade = openTradesMap.get(order);
+        if (openTrade && openTrade.openTime) {
+          trades.push({
+            id: order,
+            symbol: openTrade.symbol || symbol,
+            type: openTrade.type || 'buy',
+            openTime: openTrade.openTime,
+            closeTime: time,
+            openPrice: openTrade.openPrice || 0,
+            closePrice: price,
+            volume: openTrade.volume || volume,
+            profit,
+            commission: (openTrade.commission || 0) + commission,
+            swap: (openTrade.swap || 0) + swap
+          });
+          openTradesMap.delete(order);
+        }
       }
+    } catch (error) {
+      console.error(`Error processing row ${index + 2}:`, error);
     }
   });
 
