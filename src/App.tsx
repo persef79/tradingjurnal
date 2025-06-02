@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { CalendarDay, JournalData } from './types';
 import { generateCalendarDays } from './utils/formatters';
 import { exportToCSV } from './utils/mt5Parser';
+import { auth, db } from './lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Components
 import Header from './components/Header';
@@ -34,6 +36,54 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   );
+
+  // Load data when auth state changes
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const docRef = doc(db, 'trading_data', user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            if (userData.data) {
+              setJournalData(userData.data);
+              
+              // Set selected date to the most recent trading day
+              const dates = Object.keys(userData.data.days).sort().reverse();
+              if (dates.length > 0) {
+                setSelectedDate(dates[0]);
+                const [year, month] = dates[0].split('-').map(Number);
+                setCurrentMonth(new Date(year, month - 1, 1));
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error loading trading data:', error);
+        }
+      } else {
+        // Reset state when user logs out
+        setJournalData({
+          days: {},
+          statistics: {
+            totalTrades: 0,
+            winningTrades: 0,
+            losingTrades: 0,
+            totalProfit: 0,
+            winRate: 0,
+            averageWin: 0,
+            averageLoss: 0,
+            largestWin: 0,
+            largestLoss: 0
+          }
+        });
+        setSelectedDate(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   
   useEffect(() => {
     const journalDays = Object.entries(journalData.days).reduce(
