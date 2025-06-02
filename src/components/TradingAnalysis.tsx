@@ -12,15 +12,22 @@ const TradingAnalysis: React.FC<TradingAnalysisProps> = ({ trades }) => {
     const weekdayStats = new Array(7).fill(0).map(() => ({ wins: 0, losses: 0 }));
     
     trades.forEach(trade => {
-      const hour = trade.closeTime.getHours();
-      const weekday = trade.closeTime.getDay();
-      
-      if (trade.profit > 0) {
-        hourlyStats[hour].wins++;
-        weekdayStats[weekday].wins++;
-      } else {
-        hourlyStats[hour].losses++;
-        weekdayStats[weekday].losses++;
+      // Parse the closeTime string to a Date object if it's a string
+      const closeTime = typeof trade.closeTime === 'string' 
+        ? new Date(trade.closeTime)
+        : trade.closeTime;
+
+      if (closeTime && !isNaN(closeTime.getTime())) {
+        const hour = closeTime.getHours();
+        const weekday = closeTime.getDay();
+        
+        if (trade.profit > 0) {
+          hourlyStats[hour].wins++;
+          weekdayStats[weekday].wins++;
+        } else {
+          hourlyStats[hour].losses++;
+          weekdayStats[weekday].losses++;
+        }
       }
     });
     
