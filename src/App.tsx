@@ -11,6 +11,7 @@ import Calendar from './components/Calendar';
 import DailyJournal from './components/DailyJournal';
 import StatisticsPanel from './components/StatisticsPanel';
 import ImportModal from './components/ImportModal';
+import TradingAnalysis from './components/TradingAnalysis';
 
 function App() {
   // App state
@@ -168,6 +169,9 @@ function App() {
   const toggleDarkMode = () => {
     setIsDarkMode(prev => !prev);
   };
+
+  // Get all trades for analysis
+  const allTrades = Object.values(journalData.days).flatMap(day => day.trades);
   
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -179,27 +183,29 @@ function App() {
       />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
+        <div className="space-y-6">
           <StatisticsPanel statistics={journalData.statistics} />
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
-            <Calendar 
-              calendarDays={calendarDays}
-              currentMonth={currentMonth}
-              onDayClick={handleDayClick}
-              onPrevMonth={handlePrevMonth}
-              onNextMonth={handleNextMonth}
-              selectedDate={selectedDate}
-            />
-          </div>
           
-          <div className="lg:col-span-3">
-            <DailyJournal 
-              dayJournal={selectedDate ? journalData.days[selectedDate] : null}
-              onUpdateObservations={handleUpdateObservations}
-            />
+          <TradingAnalysis trades={allTrades} />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-1">
+              <Calendar 
+                calendarDays={calendarDays}
+                currentMonth={currentMonth}
+                onDayClick={handleDayClick}
+                onPrevMonth={handlePrevMonth}
+                onNextMonth={handleNextMonth}
+                selectedDate={selectedDate}
+              />
+            </div>
+            
+            <div className="lg:col-span-3">
+              <DailyJournal 
+                dayJournal={selectedDate ? journalData.days[selectedDate] : null}
+                onUpdateObservations={handleUpdateObservations}
+              />
+            </div>
           </div>
         </div>
       </main>
