@@ -17,17 +17,18 @@ function normalizeHeader(header: string): string {
 function getTradeActionType(type: string): 'open' | 'close' | '' {
   const normalizedType = type.toLowerCase().trim();
   
-  if (normalizedType.includes('buy') || normalizedType.includes('sell')) return 'open';
-  if (normalizedType.includes('close')) return 'close';
+  if (normalizedType === 'buy' || normalizedType === 'sell') return 'open';
+  if (normalizedType === 'close') return 'close';
   
   return '';
 }
 
-function getTradeDirection(direction: string): 'buy' | 'sell' {
-  const normalizedDirection = direction?.toLowerCase().trim() || '';
+function getTradeDirection(type: string, direction: string): 'buy' | 'sell' {
+  const normalizedType = type.toLowerCase().trim();
+  const normalizedDirection = direction.toLowerCase().trim();
   
-  if (normalizedDirection.includes('buy') || normalizedDirection.includes('long')) return 'buy';
-  if (normalizedDirection.includes('sell') || normalizedDirection.includes('short')) return 'sell';
+  if (normalizedType === 'buy' || normalizedDirection === 'long') return 'buy';
+  if (normalizedType === 'sell' || normalizedDirection === 'short') return 'sell';
   
   return 'buy'; // Default to buy if direction is unclear
 }
@@ -62,7 +63,6 @@ function parseDateTime(dateStr: string): Date {
 }
 
 interface OpenTrade {
-  id: string;
   symbol: string;
   type: 'buy' | 'sell';
   openTime: Date;
@@ -70,97 +70,68 @@ interface OpenTrade {
   volume: number;
   commission: number;
   swap: number;
-  ticket?: string;
-  position?: string;
+  order: string;
 }
 
 function parseTrades(rows: CsvRow[]): Trade[] {
   const trades: Trade[] = [];
-  const openTradesMap = new Map<string, OpenTrade>();
-  const openTradesBySymbol = new Map<string, OpenTrade[]>();
+  const openPositions: OpenTrade[] = [];
+  let tradeId = 1;
 
-  rows.forEach((row, index) => {
-    try {
-      const symbol = row['Deal'] || row['Symbol'] || '';
-      const timeStr = row['Time'] || '';
-      const type = row['Type'] || '';
-      const direction = row['Direction'] || type;
-      const volume = parseFloat(row['Volume'] || row['Lots'] || '0') || 0;
-      const price = parseFloat(row['Price']) || 0;
-      const order = row['Order'] || row['Ticket'] || row['Position'] || '';
-      const profit = parseFloat(row['Profit']) || 0;
-      const commission = parseFloat(row['Commission']) || 0;
-      const swap = parseFloat(row['Swap']) || 0;
-      const ticket = row['Ticket'] || '';
-      const position = row['Position'] || '';
+  rows.forEach((row) => {
+    const symbol = row['Deal'] || '';
+    const timeStr = row['Time'] || '';
+    const type = row['Type'] || '';
+    const direction = row['Direction'] || '';
+    const volume = parseFloat(row['Volume']) || 0;
+    const price = parseFloat(row['Price']) || 0;
+    const order = row['Order'] || '';
+    const profit = parseFloat(row['Profit']) || 0;
+    const commission = parseFloat(row['Commission']) || 0;
+    const swap = parseFloat(row['Swap']) || 0;
 
-      const time = parseDateTime(timeStr);
-      const action = getTradeActionType(type);
-      const tradeDirection = getTradeDirection(direction);
+    const time = parseDateTime(timeStr);
+    const action = getTradeActionType(type);
+    const tradeDirection = getTradeDirection(type, direction);
 
-      if (action === 'open') {
-        const openTrade: OpenTrade = {
-          id: order,
-          symbol,
-          type: tradeDirection,
-          openTime: time,
-          openPrice: price,
-          volume,
-          commission,
-          swap,
-          ticket,
-          position
-        };
+    if (action === 'open') {
+      openPositions.push({
+        symbol,
+        type: tradeDirection,
+        openTime: time,
+        openPrice: price,
+        volume,
+        commission,
+        swap,
+        order
+      });
+    } else if (action === 'close') {
+      // Find matching open position
+      const openPositionIndex = openPositions.findIndex(pos => 
+        pos.symbol === symbol && 
+        pos.volume === volume &&
+        !trades.some(t => t.openTime === pos.openTime)
+      );
 
-        openTradesMap.set(order, openTrade);
-        
-        if (!openTradesBySymbol.has(symbol)) {
-          openTradesBySymbol.set(symbol, []);
-        }
-        openTradesBySymbol.get(symbol)?.push(openTrade);
-      } else if (action === 'close') {
-        // Try to find matching open trade
-        let openTrade = openTradesMap.get(order);
-        
-        // If no direct match found, try to find by symbol and volume
-        if (!openTrade) {
-          const symbolTrades = openTradesBySymbol.get(symbol) || [];
-          openTrade = symbolTrades.find(t => 
-            t.volume === volume && 
-            t.type === tradeDirection &&
-            !trades.some(completedTrade => completedTrade.id === t.id)
-          );
-          
-          if (openTrade) {
-            openTradesMap.delete(openTrade.id);
-            const symbolTrades = openTradesBySymbol.get(symbol) || [];
-            const index = symbolTrades.findIndex(t => t.id === openTrade?.id);
-            if (index !== -1) {
-              symbolTrades.splice(index, 1);
-            }
-          }
-        }
+      if (openPositionIndex !== -1) {
+        const openPosition = openPositions[openPositionIndex];
+        trades.push({
+          id: `trade-${tradeId++}`,
+          symbol: openPosition.symbol,
+          type: openPosition.type,
+          openTime: openPosition.openTime,
+          closeTime: time,
+          openPrice: openPosition.openPrice,
+          closePrice: price,
+          volume: openPosition.volume,
+          profit,
+          commission: openPosition.commission + commission,
+          swap: openPosition.swap + swap
+        });
 
-        if (openTrade && openTrade.openTime) {
-          trades.push({
-            id: openTrade.id,
-            symbol: openTrade.symbol,
-            type: openTrade.type,
-            openTime: openTrade.openTime,
-            closeTime: time,
-            openPrice: openTrade.openPrice,
-            closePrice: price,
-            volume: openTrade.volume,
-            profit,
-            commission: (openTrade.commission || 0) + commission,
-            swap: (openTrade.swap || 0) + swap
-          });
-          
-          openTradesMap.delete(openTrade.id);
-        }
+        // Remove the matched open position
+        openPositions.splice(openPositionIndex, 1);
       }
-    } catch (error) {
-      console.error(`Error processing row ${index + 2}:`, error);
     }
   });
 
@@ -171,12 +142,12 @@ export function parseMT5Data(csvData: string): JournalData {
   try {
     const rows = parseCsvToObjects(csvData);
     if (rows.length === 0) {
-      throw new Error('No valid rows found in the CSV file. Please check the file format.');
+      throw new Error('No valid rows found in the CSV file');
     }
 
     const trades = parseTrades(rows);
     if (trades.length === 0) {
-      throw new Error('No valid trades found in the CSV file. Please check the file format.');
+      throw new Error('No valid trades found in the CSV file');
     }
 
     // Group trades by day
