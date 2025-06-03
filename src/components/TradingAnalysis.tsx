@@ -12,22 +12,31 @@ const TradingAnalysis: React.FC<TradingAnalysisProps> = ({ trades }) => {
     const weekdayStats = new Array(7).fill(0).map(() => ({ wins: 0, losses: 0 }));
     
     trades.forEach(trade => {
-      // Parse the closeTime string to a Date object if it's a string
-      const closeTime = typeof trade.closeTime === 'string' 
-        ? new Date(trade.closeTime)
-        : trade.closeTime;
-
-      if (closeTime && !isNaN(closeTime.getTime())) {
-        const hour = closeTime.getHours();
-        const weekday = closeTime.getDay();
-        
-        if (trade.profit > 0) {
-          hourlyStats[hour].wins++;
-          weekdayStats[weekday].wins++;
-        } else {
-          hourlyStats[hour].losses++;
-          weekdayStats[weekday].losses++;
+      let closeTimeDate: Date | null = null;
+      
+      try {
+        // Handle different possible formats of closeTime
+        if (trade.closeTime instanceof Date) {
+          closeTimeDate = trade.closeTime;
+        } else if (typeof trade.closeTime === 'string' && trade.closeTime) {
+          closeTimeDate = new Date(trade.closeTime);
         }
+        
+        // Verify we have a valid date before proceeding
+        if (closeTimeDate && !isNaN(closeTimeDate.getTime())) {
+          const hour = closeTimeDate.getHours();
+          const weekday = closeTimeDate.getDay();
+          
+          if (trade.profit > 0) {
+            hourlyStats[hour].wins++;
+            weekdayStats[weekday].wins++;
+          } else {
+            hourlyStats[hour].losses++;
+            weekdayStats[weekday].losses++;
+          }
+        }
+      } catch (error) {
+        console.warn('Invalid date format for trade:', trade);
       }
     });
     
